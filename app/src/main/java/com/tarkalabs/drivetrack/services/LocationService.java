@@ -26,6 +26,8 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     private GoogleApiClient googleApiClient;
     public static Boolean IS_LISTENING=false;
     private MyLocationListener myLocationListener;
+    private BroadcastReceiver stopReceiver;
+    private BroadcastReceiver startReceiver;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -53,22 +55,24 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         isResolving=false;
         startListening();
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
+        stopReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, myLocationListener);
-                IS_LISTENING=false;
+                IS_LISTENING = false;
                 stopSelf();
             }
-        }, new IntentFilter("stop_listening"));
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(stopReceiver, new IntentFilter("stop_listening"));
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
+        startReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 startListening();
-                IS_LISTENING=false;
+                IS_LISTENING = false;
             }
-        }, new IntentFilter("start_listening"));
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(startReceiver, new IntentFilter("start_listening"));
     }
 
 
@@ -88,6 +92,13 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onConnectionSuspended(int i) {
 
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(startReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(stopReceiver);
     }
 
     @Override

@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap googleMap;
     private Marker marker;
     private Button toggleButton;
+    private BroadcastReceiver locationReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         map = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         map.getMapAsync(this);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
+        locationReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
@@ -71,7 +72,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     updateLocation(new LatLng(lat, lng));
                 }
             }
-        }, new IntentFilter("location"));
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(locationReceiver, new IntentFilter("location"));
 
     }
     private void stopListening() {
@@ -87,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationReceiver);
     }
 
 
